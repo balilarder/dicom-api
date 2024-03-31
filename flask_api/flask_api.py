@@ -29,6 +29,8 @@ def upload_dcm():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
 
+            if not os.path.exists(UPLOAD_FOLDER):
+                os.mkdir(UPLOAD_FOLDER)
             # Check the file is exist already
             if os.path.exists(os.path.join(UPLOAD_FOLDER, filename)):
                 abort(500, "File already exists.")
