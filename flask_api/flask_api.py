@@ -1,8 +1,9 @@
-from flask import Flask
-from flask import flash, request, redirect, url_for
+from flask import Flask, jsonify, request
+from flask import flash, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
 from pydicom import dcmread
+from glob import glob
 
  
 # instance of flask application
@@ -28,11 +29,13 @@ def upload_dcm():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
 
-            print(f"save to {os.path.join(app.config['UPLOAD_FOLDER'],filename)}")
+            print(f"save to {os.path.join(UPLOAD_FOLDER,filename)}")
+            # 要檢查 沒有檔案才放進來，已經有了要render錯誤
+            if os.path.exists(os.path.join(UPLOAD_FOLDER, filename)):
+                return "Error: the file name is existed."
+
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], 
                                    filename))
-            
-            # 要檢查 沒有檔案才放進來，已經有了要render錯誤
             
             # return redirect(url_for('uploaded_file',
                                     # filename=filename))
@@ -50,9 +53,20 @@ def upload_dcm():
       <p><input type=file name=file>
          <input type=submit value=Upload>
     </form>
+
+    <button>list all DCM on the server</button>
     '''
 
 # list all available dcm files
+@app.route('/list_dcm', methods=['GET'])
+def list_dcm():
+    if request.method == 'GET':
+        if not os.path.isdir(UPLOAD_FOLDER):
+            return "Error, Server DCM path not found."
+        
+        files = glob(UPLOAD_FOLDER + '/*.dcm')
+        print(files)
+    return jsonify([os.path.basename(file) for file in files])
 
 # create an API to receive the DCM and show the information
 
