@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from flask import flash, redirect, url_for
+from flask import flash, redirect, url_for, render_template, abort
 from werkzeug.utils import secure_filename
 import os
 from pydicom import dcmread
@@ -29,43 +29,29 @@ def upload_dcm():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
 
-            print(f"save to {os.path.join(UPLOAD_FOLDER,filename)}")
             # Check the file is exist already
             if os.path.exists(os.path.join(UPLOAD_FOLDER, filename)):
-                return "Error: the file name is existed."
+                abort(500, "File already exists.")
 
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], 
                                    filename))
             
             # return redirect(url_for('uploaded_file',
                                     # filename=filename))
-            print("allow file", file.filename)
         else:
-            # print("not allow")  # render not allow
-            return "Error: the file should be dcm format"
+            abort(500, "the file should be dcm format")
     
     # 主畫面
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form action="" method=post enctype=multipart/form-data>
-      <p><input type=file name=file>
-         <input type=submit value=Upload>
-    </form>
-
-    <button>list all DCM on the server</button>
-    '''
+    return render_template('home.html')
 
 # list all available dcm files
 @app.route('/list_dcm', methods=['GET'])
 def list_dcm():
     if request.method == 'GET':
         if not os.path.isdir(UPLOAD_FOLDER):
-            return "Error, Server DCM path not found."
+            abort(500, "DCM path not found in server")
         
         files = glob(UPLOAD_FOLDER + '/*.dcm')
-        print(files)
         return jsonify([os.path.basename(file) for file in files])
     
 # create an API to receive the DCM and show the information
