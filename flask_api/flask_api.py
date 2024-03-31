@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from flask import flash, redirect, url_for, render_template, abort
+from flask import render_template, abort
 from werkzeug.utils import secure_filename
 import os
 from pydicom import dcmread
@@ -36,8 +36,6 @@ def upload_dcm():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], 
                                    filename))
             
-            # return redirect(url_for('uploaded_file',
-                                    # filename=filename))
         else:
             abort(500, "the file should be dcm format")
     
