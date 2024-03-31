@@ -30,7 +30,7 @@ def upload_dcm():
             filename = secure_filename(file.filename)
 
             print(f"save to {os.path.join(UPLOAD_FOLDER,filename)}")
-            # 要檢查 沒有檔案才放進來，已經有了要render錯誤
+            # Check the file is exist already
             if os.path.exists(os.path.join(UPLOAD_FOLDER, filename)):
                 return "Error: the file name is existed."
 
@@ -66,11 +66,28 @@ def list_dcm():
         
         files = glob(UPLOAD_FOLDER + '/*.dcm')
         print(files)
-    return jsonify([os.path.basename(file) for file in files])
-
+        return jsonify([os.path.basename(file) for file in files])
+    
 # create an API to receive the DCM and show the information
-
-
+@app.route('/dcm_information/<dcm_file_name>', methods=['GET'])
+def retrieve_dcm_information(dcm_file_name):
+    dcm_file = dcm_file_name + '.dcm'
+    try:
+        ds = dcmread("/".join([UPLOAD_FOLDER, dcm_file]))
+    except FileNotFoundError:
+        return "File not Found"
+    
+    attributes = ['PatientID', 'AccessionNumber', 'StudyInstanceUID', 
+              'SOPInstanceUID', 'ReferencedSOPInstanceUID', 
+              'SeriesInstanceUID', 'SeriesDate', 'SeriesNumber']
+    # handle keyerror
+    result = {}
+    for attr in attributes:
+        if hasattr(ds, attr):
+            result[attr] = getattr(ds, attr)
+    
+    print(result)
+    return jsonify(result)
 
 if __name__ == '__main__':  
    app.run()
